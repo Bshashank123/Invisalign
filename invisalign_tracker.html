@@ -1,72 +1,190 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Invisalign Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap"/>
 <style>
-  input[type=date],input[type=number]{background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);color:var(--color-text-primary);padding:8px 12px;border-radius:var(--border-radius-md);font-family:var(--font-sans);font-size:14px;outline:none;width:100%}
-  input[type=date]:focus,input[type=number]:focus{border-color:var(--color-border-info);box-shadow:0 0 0 2px rgba(24,95,165,.15)}
-  input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
-  .inv-btn{cursor:pointer;font-family:var(--font-sans);transition:opacity .15s,transform .1s}
-  .inv-btn:hover{opacity:.85}.inv-btn:active{transform:scale(.98)}
-  .row-hover:hover{background:var(--color-background-secondary)!important}
-  @keyframes inv-fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-  .inv-fade{animation:inv-fade .3s ease forwards}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e0f11;
+  --bg2:#16181c;
+  --bg3:#1e2025;
+  --bg4:#252830;
+  --border:#2e3138;
+  --border2:#3a3f4a;
+  --text:#ecedf0;
+  --text2:#9aa0ad;
+  --text3:#5e6472;
+  --accent:#7ee8c4;
+  --warn:#f5c842;
+  --danger:#f27575;
+  --info:#7eb8f5;
+  --radius:12px;
+  --radius2:8px;
+  --font-body:'DM Sans',sans-serif;
+  --font-display:'Fraunces',serif;
+  --font-mono:'DM Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden}
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background:radial-gradient(ellipse 60% 40% at 70% 10%,rgba(126,232,196,.06) 0%,transparent 60%),
+             radial-gradient(ellipse 40% 30% at 10% 80%,rgba(126,184,245,.04) 0%,transparent 50%);
+  pointer-events:none;
+}
+#root{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:2rem 1.5rem 4rem}
+.display{font-family:var(--font-display);font-weight:300;letter-spacing:-.02em}
+.mono{font-family:var(--font-mono)}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem}
+.card-sm{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:1rem}
+.card-xs{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:.6rem .875rem}
+button{cursor:pointer;font-family:var(--font-body);font-size:14px;border:none;outline:none;transition:all .15s}
+.btn{padding:.45rem 1rem;border-radius:var(--radius2);font-weight:500;font-size:13px;display:inline-flex;align-items:center;gap:.35rem;white-space:nowrap}
+.btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn:active{transform:translateY(0);filter:brightness(.95)}
+.btn-accent{background:var(--accent);color:#0a1a14}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text2)}
+.btn-ghost:hover{background:var(--bg3);border-color:var(--border2)}
+.btn-danger{background:rgba(242,117,117,.12);border:1px solid rgba(242,117,117,.3);color:var(--danger)}
+.tabs{display:flex;gap:.25rem;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:.25rem;width:fit-content}
+.tab{padding:.4rem .875rem;border-radius:6px;font-size:13px;font-weight:500;color:var(--text2);background:transparent;border:1px solid transparent}
+.tab.active{background:var(--bg2);color:var(--text);border-color:var(--border)}
+.tab:hover:not(.active){color:var(--text);background:rgba(255,255,255,.04)}
+input[type=date],input[type=number],input[type=text]{
+  background:var(--bg3);border:1px solid var(--border);color:var(--text);
+  padding:.5rem .75rem;border-radius:var(--radius2);font-family:var(--font-body);font-size:14px;
+  outline:none;width:100%;transition:border-color .15s
+}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(126,232,196,.1)}
+input::-webkit-inner-spin-button{-webkit-appearance:none}
+input[type=date]::-webkit-calendar-picker-indicator{filter:invert(.4) brightness(1.5)}
+.field-label{display:block;font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.35rem;font-weight:500}
+.badge{display:inline-flex;align-items:center;gap:.25rem;padding:.2rem .6rem;border-radius:99px;font-size:12px;font-weight:500;white-space:nowrap}
+.badge-accent{background:rgba(126,232,196,.12);color:var(--accent);border:1px solid rgba(126,232,196,.2)}
+.badge-warn{background:rgba(245,200,66,.12);color:var(--warn);border:1px solid rgba(245,200,66,.2)}
+.badge-info{background:rgba(126,184,245,.12);color:var(--info);border:1px solid rgba(126,184,245,.2)}
+.badge-muted{background:var(--bg4);color:var(--text3);border:1px solid var(--border)}
+.alert{border-radius:var(--radius2);padding:.875rem 1rem;display:flex;align-items:flex-start;gap:.75rem;border:1px solid}
+.alert-warn{background:rgba(245,200,66,.07);border-color:rgba(245,200,66,.25)}
+.alert-success{background:rgba(126,232,196,.07);border-color:rgba(126,232,196,.2)}
+.alert-info{background:rgba(126,184,245,.07);border-color:rgba(126,184,245,.2)}
+.progress-track{background:var(--bg3);border-radius:99px;overflow:hidden;height:5px}
+.progress-fill{height:100%;border-radius:99px;transition:width .8s cubic-bezier(.4,0,.2,1)}
+.ring-wrap{position:relative;flex-shrink:0}
+.ring-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{text-align:left;padding:.6rem .875rem;font-size:10.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:500;border-bottom:1px solid var(--border)}
+.tbl td{padding:.7rem .875rem;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:rgba(255,255,255,.02)}
+.tbl tr.row-active td{background:rgba(126,232,196,.04)}
+.tbl tr.row-done{opacity:.6}
+.set-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+@media(max-width:560px){.set-grid{grid-template-columns:repeat(6,1fr)}}
+.set-pip{aspect-ratio:1;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-family:var(--font-mono);font-weight:500;border:1px solid transparent;transition:all .2s}
+.pip-empty{background:var(--bg3);color:var(--text3);border-color:var(--border)}
+.pip-cfg{background:rgba(126,184,245,.1);color:var(--info);border-color:rgba(126,184,245,.15)}
+.pip-done{background:rgba(126,232,196,.1);color:var(--accent);border-color:rgba(126,232,196,.15)}
+.pip-cur{background:rgba(126,232,196,.2);color:var(--accent);border-color:var(--accent);box-shadow:0 0 10px rgba(126,232,196,.2)}
+.upcoming-row{display:flex;align-items:center;gap:.875rem;padding:.7rem .875rem;border-radius:var(--radius2);transition:background .1s;border:1px solid transparent}
+.upcoming-row:hover{background:var(--bg3)}
+.upcoming-row.active-row{background:rgba(126,232,196,.05);border-color:rgba(126,232,196,.1)}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.625rem}
+@media(max-width:520px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
+.stat-item{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius2);padding:.875rem}
+.section-gap{display:flex;flex-direction:column;gap:1rem}
+.helper{font-size:12px;color:var(--text3);margin-top:.3rem}
+.streak-bar{display:flex;gap:4px;flex-wrap:wrap;margin-top:.5rem}
+.streak-dot{width:18px;height:18px;border-radius:4px;flex-shrink:0}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fadein{animation:fadein .28s ease both}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
+@media(max-width:640px){#root{padding:1rem 1rem 3rem}.card{padding:1.125rem}}
 </style>
-
-<div id="app" style="padding:0 0 2rem"></div>
-
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+</head>
+<body>
+<div id="root"></div>
 <script>
-const {useState,useEffect,useMemo}=React;
-const KEY="inv-v2";
-const INIT={startDate:"",groups:[],changed:{}};
-const pd=s=>{if(!s)return null;const d=new Date(s+"T00:00:00");return isNaN(d.getTime())?null:d};
-const fmt=d=>d?d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"—";
-const fmts=d=>d?d.toLocaleDateString("en-US",{month:"short",day:"numeric"}):"—";
+// ── Utils ─────────────────────────────────────────────────────────────────────
+const KEY="inv-v3";
+const pd=s=>{if(!s)return null;const d=new Date(s+"T00:00:00");return isNaN(d)?null:d};
+const iso=d=>d.toISOString().split("T")[0];
 const addD=(d,n)=>{const r=new Date(d);r.setDate(r.getDate()+n);return r};
 const diff=(a,b)=>Math.round((+b-+a)/86400000);
-const iso=d=>d.toISOString().split("T")[0];
 const tod0=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+const fmt=d=>d?d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"—";
+const fmts=d=>d?d.toLocaleDateString("en-US",{month:"short",day:"numeric"}):"—";
 
-function Ring({pct,size=100,thick=8,color}){
-  const r=(size-thick)/2,c=2*Math.PI*r,fill=c*Math.min(Math.max(pct,0),1);
-  return React.createElement("svg",{width:size,height:size,style:{transform:"rotate(-90deg)"}},
-    React.createElement("circle",{cx:size/2,cy:size/2,r,fill:"none",stroke:"var(--color-border-tertiary)",strokeWidth:thick}),
-    React.createElement("circle",{cx:size/2,cy:size/2,r,fill:"none",stroke:color||"var(--color-text-info)",strokeWidth:thick,
-      strokeDasharray:`${fill} ${c}`,strokeLinecap:"round",style:{transition:"stroke-dasharray .6s ease"}}));
+// ── Storage ───────────────────────────────────────────────────────────────────
+const store={
+  get:()=>{try{const v=localStorage.getItem(KEY);return v?JSON.parse(v):null}catch{return null}},
+  set:v=>{try{localStorage.setItem(KEY,JSON.stringify(v))}catch{}}
+};
+const INIT={startDate:"",groups:[],changed:{},notes:{}};
+
+// ── Compute sets ──────────────────────────────────────────────────────────────
+function computeSets(cfg){
+  const arr=Array.from({length:24},(_,i)=>({id:i+1,days:null,start:null,end:null}));
+  for(const g of cfg.groups)
+    for(let i=g.from-1;i<Math.min(g.to,24);i++)arr[i].days=g.days;
+  if(cfg.startDate){
+    let cur=pd(cfg.startDate);
+    for(let i=0;i<24;i++){
+      if(!cur||!arr[i].days){if(!arr[i].days&&cur){}else cur=null;continue;}
+      arr[i].start=new Date(cur);
+      arr[i].end=addD(cur,arr[i].days-1);
+      cur=addD(cur,arr[i].days);
+    }
+  }
+  return arr;
 }
 
-function App(){
-  const[cfg,setCfg]=useState(INIT);
-  const[ready,setReady]=useState(false);
-  const[tab,setTab]=useState("dash");
-  const[gf,setGf]=useState({from:"",to:"",days:""});
-  const[editIdx,setEditIdx]=useState(null);
+// ── DOM helpers ───────────────────────────────────────────────────────────────
+function h(tag,attrs={},...kids){
+  const el=document.createElement(tag);
+  for(const[k,v]of Object.entries(attrs)){
+    if(k==="class")el.className=v;
+    else if(k.startsWith("on"))el.addEventListener(k.slice(2).toLowerCase(),v);
+    else if(k==="style"&&typeof v==="object")Object.assign(el.style,v);
+    else el.setAttribute(k,v);
+  }
+  for(const c of kids.flat(Infinity)){
+    if(c==null||c===false)continue;
+    if(typeof c==="string"||typeof c==="number")el.appendChild(document.createTextNode(c));
+    else el.appendChild(c);
+  }
+  return el;
+}
+function hsvg(html){const d=document.createElement("div");d.innerHTML=html;return d.firstChild}
 
-  useEffect(()=>{
-    (async()=>{
-      try{const r=await window.storage.get(KEY);if(r?.value)setCfg(JSON.parse(r.value))}catch{}
-      setReady(true);
-    })();
-  },[]);
+// ── Ring SVG ──────────────────────────────────────────────────────────────────
+function Ring({pct,size=112,thick=9,color="var(--accent)"}){
+  const r=(size-thick)/2,c=2*Math.PI*r,fill=c*Math.min(Math.max(pct,0),1);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg)">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--bg4)" stroke-width="${thick}"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${thick}"
+      stroke-dasharray="${fill} ${c}" stroke-linecap="round" style="transition:stroke-dasharray .8s ease"/>
+  </svg>`;
+}
 
-  const save=async next=>{setCfg(next);try{await window.storage.set(KEY,JSON.stringify(next))}catch{}};
+// ── State ─────────────────────────────────────────────────────────────────────
+let state={cfg:INIT,tab:"dash",gf:{from:"",to:"",days:""},editIdx:null,now:tod0()};
+function loadState(){const s=store.get();if(s)state.cfg={...INIT,...s};}
 
-  const sets=useMemo(()=>{
-    const arr=Array.from({length:24},(_,i)=>({id:i+1,days:null,start:null,end:null}));
-    for(const g of cfg.groups)for(let i=g.from-1;i<Math.min(g.to,24);i++)arr[i].days=g.days;
-    if(cfg.startDate){
-      let cur=pd(cfg.startDate);
-      for(let i=0;i<24;i++){
-        if(!cur||!arr[i].days)continue;
-        arr[i].start=new Date(cur);
-        arr[i].end=addD(cur,arr[i].days-1);
-        cur=addD(cur,arr[i].days);
-      }
-    }
-    return arr;
-  },[cfg]);
+function saveState(next){state.cfg=next;store.set(next);render();}
+function setState(p){Object.assign(state,p);render();}
 
-  const NOW=tod0();
-  const cur=useMemo(()=>sets.find(s=>s.start&&s.end&&NOW>=s.start&&NOW<=s.end),[sets]);
+// ── Derived ───────────────────────────────────────────────────────────────────
+function getDerived(){
+  const{cfg,now:NOW}=state;
+  const sets=computeSets(cfg);
+  const cur=sets.find(s=>s.start&&s.end&&NOW>=s.start&&NOW<=s.end)||null;
+  const nextSet=cur?sets[cur.id]:null;
   const daysIn=cur?diff(cur.start,NOW)+1:0;
   const daysLeft=cur?diff(NOW,cur.end):0;
   const ringPct=cur?.days?daysIn/cur.days:0;
@@ -79,264 +197,429 @@ function App(){
   const firstStart=cfg.startDate?pd(cfg.startDate):null;
   const daysInTreatment=firstStart?Math.max(0,diff(firstStart,NOW)):0;
   const lastCfg=[...sets].reverse().find(s=>s.end);
-  const estEnd=lastCfg?.end;
+  const estEnd=lastCfg?.end||null;
   const overallPct=totalDays>0&&firstStart?Math.min(1,daysInTreatment/totalDays):0;
-  const upcoming=sets.filter(s=>s.start&&s.end&&s.end>=NOW).slice(0,5);
-
-  const markChanged=()=>{
-    if(!cur)return;
-    const ch={...(cfg.changed||{})};
-    if(ch[cur.id])delete ch[cur.id];else ch[cur.id]=iso(NOW);
-    save({...cfg,changed:ch});
-  };
-
-  const addGroup=()=>{
-    const from=parseInt(gf.from),to=parseInt(gf.to),days=parseInt(gf.days);
-    if(!from||!to||!days||from>to||from<1||to>24||days<1)return;
-    let groups=[...cfg.groups];
-    if(editIdx!==null){groups[editIdx]={from,to,days};setEditIdx(null);}
-    else groups.push({from,to,days});
-    groups.sort((a,b)=>a.from-b.from);
-    save({...cfg,groups});
-    setGf({from:"",to:"",days:""});
-  };
-
-  const deleteGroup=i=>save({...cfg,groups:cfg.groups.filter((_,idx)=>idx!==i)});
-  const editGroup=i=>{setGf({from:String(cfg.groups[i].from),to:String(cfg.groups[i].to),days:String(cfg.groups[i].days)});setEditIdx(i)};
-
-  const getStatus=s=>{
-    if(!s.start)return"unconfigured";
-    if(NOW>s.end)return"completed";
-    if(cur?.id===s.id)return"current";
-    return"upcoming";
-  };
-
-  const e=React.createElement;
-  const card={background:"var(--color-background-primary)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:"var(--border-radius-lg)",padding:"1.25rem"};
-  const sec={background:"var(--color-background-secondary)",borderRadius:"var(--border-radius-md)",padding:"12px"};
-
-  if(!ready)return e("div",{style:{padding:"2rem",textAlign:"center",color:"var(--color-text-tertiary)"}},"Loading...");
-
-  return e("div",{style:{padding:"0 0 2rem"}},
-    e("h2",{className:"sr-only"},"Invisalign Treatment Tracker"),
-
-    // Header
-    e("div",{style:{borderBottom:"0.5px solid var(--color-border-tertiary)",paddingBottom:"1rem",marginBottom:"1.25rem"}},
-      e("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}},
-        e("div",null,
-          e("h2",{style:{fontSize:22,fontWeight:500,margin:0,lineHeight:1.2}},
-            e("i",{className:"ti ti-tooth","aria-hidden":"true",style:{marginRight:8}}),
-            "Invisalign tracker"),
-          e("p",{style:{fontSize:13,color:"var(--color-text-secondary)",margin:"4px 0 0"}},
-            `${configuredCount}/24 sets configured · ${completedCount} completed · ${totalDays} total days`)),
-        estEnd&&e("div",{style:{...sec,padding:"8px 16px",textAlign:"right"}},
-          e("div",{style:{fontSize:11,color:"var(--color-text-tertiary)",textTransform:"uppercase",letterSpacing:1,marginBottom:4}},"Est. completion"),
-          e("div",{style:{fontSize:15,fontWeight:500,fontFamily:"var(--font-mono)"}},fmt(estEnd)))),
-
-      e("div",{style:{display:"flex",gap:4,marginTop:"1rem"}},
-        [["dash","Dashboard"],["timeline","Timeline"],["setup","Setup"]].map(([id,label])=>
-          e("button",{key:id,className:"inv-btn",onClick:()=>setTab(id),style:{
-            padding:"6px 18px",borderRadius:"var(--border-radius-md)",fontSize:14,fontWeight:500,
-            border:tab===id?"0.5px solid var(--color-border-primary)":"0.5px solid transparent",
-            background:tab===id?"var(--color-background-primary)":"transparent",
-            color:tab===id?"var(--color-text-primary)":"var(--color-text-secondary)"}},label)))),
-
-    // DASHBOARD
-    tab==="dash"&&e("div",{className:"inv-fade",style:{display:"flex",flexDirection:"column",gap:"1rem"}},
-      // Alerts
-      changeToday&&!isChanged&&e("div",{style:{background:"var(--color-background-warning)",border:"0.5px solid var(--color-border-warning)",borderRadius:"var(--border-radius-md)",padding:"12px 16px",display:"flex",alignItems:"center",gap:10}},
-        e("i",{className:"ti ti-bell-ringing",style:{fontSize:20,color:"var(--color-text-warning)"},"aria-hidden":"true"}),
-        e("div",null,
-          e("div",{style:{fontWeight:500,color:"var(--color-text-warning)"}},"Time to change aligners!"),
-          e("div",{style:{fontSize:13,color:"var(--color-text-warning)"}},`Today is the last day of Set ${cur.id}. Switch to Set ${cur.id+1}.`))),
-      changeToday&&isChanged&&e("div",{style:{background:"var(--color-background-success)",border:"0.5px solid var(--color-border-success)",borderRadius:"var(--border-radius-md)",padding:"12px 16px",display:"flex",alignItems:"center",gap:10}},
-        e("i",{className:"ti ti-circle-check",style:{fontSize:20,color:"var(--color-text-success)"},"aria-hidden":"true"}),
-        e("div",{style:{fontWeight:500,color:"var(--color-text-success)"}},`Set ${cur.id} complete! You've changed to Set ${cur.id+1}.`)),
-      changeTomorrow&&e("div",{style:{background:"var(--color-background-info)",border:"0.5px solid var(--color-border-info)",borderRadius:"var(--border-radius-md)",padding:"12px 16px",display:"flex",alignItems:"center",gap:10}},
-        e("i",{className:"ti ti-calendar-event",style:{fontSize:20,color:"var(--color-text-info)"},"aria-hidden":"true"}),
-        e("div",{style:{fontSize:14,color:"var(--color-text-info)"}},
-          "Reminder: change aligners ",e("strong",null,"tomorrow"),` (Set ${cur.id} → Set ${cur.id+1})`)),
-
-      // Current set hero
-      cur?e("div",{style:{...card,display:"grid",gridTemplateColumns:"auto 1fr",gap:"1.25rem",alignItems:"center"}},
-        e("div",{style:{position:"relative",width:104,height:104,flexShrink:0}},
-          e(Ring,{pct:ringPct,size:104,thick:9,color:changeToday?"var(--color-text-warning)":"var(--color-text-info)"}),
-          e("div",{style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}},
-            e("span",{style:{fontSize:28,fontWeight:500,fontFamily:"var(--font-mono)",lineHeight:1}},cur.id),
-            e("span",{style:{fontSize:11,color:"var(--color-text-tertiary)"}},"of 24"))),
-        e("div",null,
-          e("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
-            e("h3",{style:{fontSize:18,fontWeight:500,margin:0}},`Set ${cur.id}`),
-            e("span",{style:{fontSize:12,padding:"3px 10px",borderRadius:99,
-              background:isChanged?"var(--color-background-success)":changeToday?"var(--color-background-warning)":"var(--color-background-info)",
-              color:isChanged?"var(--color-text-success)":changeToday?"var(--color-text-warning)":"var(--color-text-info)"}},
-              isChanged?"Changed ✓":changeToday?"Change today!":"Active")),
-          e("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:12}},
-            [["Day in set",`${daysIn} / ${cur.days}`,false],
-             ["Days remaining",`${daysLeft}`,daysLeft<=2],
-             ["Change date",fmts(cur.end),changeToday]].map(([label,val,warn])=>
-              e("div",{key:label,style:sec},
-                e("div",{style:{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:4}},label),
-                e("div",{style:{fontSize:16,fontWeight:500,fontFamily:"var(--font-mono)",color:warn?"var(--color-text-warning)":"var(--color-text-primary)"}},val)))),
-          e("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:13,color:"var(--color-text-secondary)",flexWrap:"wrap",gap:8}},
-            e("span",null,`${fmt(cur.start)} → ${fmt(cur.end)}`),
-            e("button",{className:"inv-btn",onClick:markChanged,style:{
-              padding:"7px 16px",borderRadius:"var(--border-radius-md)",fontSize:13,fontWeight:500,
-              background:isChanged?"var(--color-background-success)":"var(--color-background-info)",
-              color:isChanged?"var(--color-text-success)":"var(--color-text-info)",
-              border:isChanged?"0.5px solid var(--color-border-success)":"0.5px solid var(--color-border-info)"}},
-              e("i",{className:`ti ti-${isChanged?"x":"check"}`,"aria-hidden":"true",style:{marginRight:6}}),
-              isChanged?"Unmark changed":"Mark as changed"))))
-      :e("div",{style:{...card,textAlign:"center",padding:"2.5rem"}},
-        cfg.startDate&&configuredCount>0
-          ?[e("i",{key:"t",className:"ti ti-trophy",style:{fontSize:40,color:"var(--color-text-warning)"},"aria-hidden":"true"}),
-            e("h3",{key:"h",style:{fontSize:18,fontWeight:500,margin:"12px 0 6px"}},"Treatment complete!"),
-            e("p",{key:"p",style:{color:"var(--color-text-secondary)",fontSize:14}},`All ${completedCount} sets finished.`)]
-          :[e("i",{key:"i",className:"ti ti-settings",style:{fontSize:40,color:"var(--color-text-tertiary)"},"aria-hidden":"true"}),
-            e("h3",{key:"h",style:{fontSize:18,fontWeight:500,margin:"12px 0 6px"}},"Setup required"),
-            e("p",{key:"p",style:{color:"var(--color-text-secondary)",fontSize:14,marginBottom:16}},"Configure your aligner sets to get started."),
-            e("button",{key:"b",className:"inv-btn",onClick:()=>setTab("setup"),style:{padding:"8px 20px",borderRadius:"var(--border-radius-md)",fontSize:14,background:"var(--color-background-info)",color:"var(--color-text-info)",border:"0.5px solid var(--color-border-info)"}},"Go to setup →")]),
-
-      // Overall progress
-      e("div",{style:card},
-        e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
-          e("div",{style:{fontSize:14,fontWeight:500}},"Overall progress"),
-          e("div",{style:{fontFamily:"var(--font-mono)",fontSize:14}},`${Math.round(overallPct*100)}%`)),
-        e("div",{style:{background:"var(--color-background-secondary)",borderRadius:99,height:6,overflow:"hidden",marginBottom:16}},
-          e("div",{style:{background:"var(--color-text-info)",height:"100%",width:`${overallPct*100}%`,borderRadius:99,transition:"width .8s ease"}})),
-        e("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}},
-          [["Sets done",`${completedCount}/24`],["Days in",`${daysInTreatment}d`],["Total days",`${totalDays}d`],["Est. finish",estEnd?fmts(estEnd):"—"]].map(([label,val])=>
-            e("div",{key:label,style:sec},
-              e("div",{style:{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:4}},label),
-              e("div",{style:{fontSize:15,fontWeight:500,fontFamily:"var(--font-mono)"}},val))))),
-
-      // Upcoming
-      upcoming.length>1&&e("div",{style:card},
-        e("h3",{style:{fontSize:16,fontWeight:500,margin:"0 0 12px"}},"Upcoming changes"),
-        e("div",{style:{display:"flex",flexDirection:"column",gap:6}},
-          upcoming.map(s=>{
-            const du=diff(NOW,s.end),isCur=cur?.id===s.id;
-            return e("div",{key:s.id,style:{display:"flex",alignItems:"center",gap:12,padding:"10px 12px",
-              borderRadius:"var(--border-radius-md)",
-              background:isCur?"var(--color-background-info)":"var(--color-background-secondary)"}},
-              e("div",{style:{fontFamily:"var(--font-mono)",fontSize:15,fontWeight:500,width:28,textAlign:"center",
-                color:isCur?"var(--color-text-info)":"var(--color-text-secondary)"}},s.id),
-              e("div",{style:{flex:1,fontSize:13}},
-                e("span",{style:{color:"var(--color-text-primary)"}},`Set ${s.id}`),
-                e("span",{style:{color:"var(--color-text-secondary)",marginLeft:8}},`→ change ${fmts(s.end)}`)),
-              e("div",{style:{fontFamily:"var(--font-mono)",fontSize:13,color:du<=2?"var(--color-text-warning)":"var(--color-text-secondary)"}},
-                isCur?`${daysLeft}d left`:`in ${du}d`));
-          })))),
-
-    // TIMELINE
-    tab==="timeline"&&e("div",{className:"inv-fade",style:{...card,padding:0,overflow:"hidden"}},
-      e("div",{style:{padding:"1rem 1.25rem",borderBottom:"0.5px solid var(--color-border-tertiary)"}},
-        e("h3",{style:{fontSize:16,fontWeight:500,margin:0}},"All 24 aligner sets")),
-      e("div",{style:{overflowX:"auto"}},
-        e("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:14}},
-          e("thead",null,
-            e("tr",{style:{borderBottom:"0.5px solid var(--color-border-tertiary)"}},
-              ["#","Days","Start","End / change","Status","Changed"].map(h=>
-                e("th",{key:h,style:{padding:"10px 12px",textAlign:"left",fontSize:11,color:"var(--color-text-tertiary)",textTransform:"uppercase",letterSpacing:1,fontWeight:500}},h)))),
-          e("tbody",null,
-            sets.map(s=>{
-              const st=getStatus(s),isCur=st==="current",isDone=st==="completed",ch=!!(cfg.changed?.[s.id]);
-              return e("tr",{key:s.id,className:"row-hover",style:{borderBottom:"0.5px solid var(--color-border-tertiary)",background:isCur?"var(--color-background-info)":"transparent",transition:"background .1s"}},
-                e("td",{style:{padding:"12px",fontFamily:"var(--font-mono)",fontWeight:500,fontSize:15,color:isCur?"var(--color-text-info)":isDone?"var(--color-text-tertiary)":"var(--color-text-primary)"}},s.id),
-                e("td",{style:{padding:"12px",fontFamily:"var(--font-mono)",color:s.days?"var(--color-text-primary)":"var(--color-text-tertiary)"}},s.days?`${s.days}d`:"—"),
-                e("td",{style:{padding:"12px",color:s.start?"var(--color-text-primary)":"var(--color-text-tertiary)"}},fmt(s.start)),
-                e("td",{style:{padding:"12px",color:s.end?isCur?"var(--color-text-info)":"var(--color-text-primary)":"var(--color-text-tertiary)",fontWeight:isCur?500:400}},fmt(s.end)),
-                e("td",{style:{padding:"12px"}},
-                  e("span",{style:{fontSize:12,padding:"3px 8px",borderRadius:99,
-                    background:st==="current"?"var(--color-background-info)":st==="completed"?"var(--color-background-success)":"var(--color-background-secondary)",
-                    color:st==="current"?"var(--color-text-info)":st==="completed"?"var(--color-text-success)":"var(--color-text-tertiary)"}},
-                    st==="current"?"● Active":st==="completed"?"✓ Done":st==="upcoming"?"Upcoming":"Not set")),
-                e("td",{style:{padding:"12px"}},
-                  isDone||isCur?e("button",{className:"inv-btn",onClick:()=>{
-                      const c2={...(cfg.changed||{})};
-                      if(c2[s.id])delete c2[s.id];else c2[s.id]=iso(NOW);
-                      save({...cfg,changed:c2});
-                    },style:{border:"0.5px solid",borderRadius:"var(--border-radius-md)",padding:"4px 10px",fontSize:12,
-                      background:ch?"var(--color-background-success)":"transparent",
-                      borderColor:ch?"var(--color-border-success)":"var(--color-border-tertiary)",
-                      color:ch?"var(--color-text-success)":"var(--color-text-secondary)"}},
-                    ch?"✓ Changed":"Mark")
-                  :e("span",{style:{color:"var(--color-text-tertiary)"}},"—")));
-            }))))),
-
-    // SETUP
-    tab==="setup"&&e("div",{className:"inv-fade",style:{display:"flex",flexDirection:"column",gap:"1rem"}},
-      // Start date
-      e("div",{style:card},
-        e("h3",{style:{fontSize:16,fontWeight:500,margin:"0 0 6px"}},"Treatment start date"),
-        e("p",{style:{fontSize:13,color:"var(--color-text-secondary)",margin:"0 0 14px"}},"The first day you put in Set 1."),
-        e("div",{style:{display:"flex",gap:10,alignItems:"center",maxWidth:280}},
-          e("input",{type:"date",value:cfg.startDate,onChange:ev=>save({...cfg,startDate:ev.target.value}),style:{flex:1}}),
-          cfg.startDate&&e("i",{className:"ti ti-circle-check",style:{color:"var(--color-text-success)",fontSize:20},"aria-hidden":"true"}))),
-
-      // Groups
-      e("div",{style:card},
-        e("h3",{style:{fontSize:16,fontWeight:500,margin:"0 0 6px"}},"Aligner groups"),
-        e("p",{style:{fontSize:13,color:"var(--color-text-secondary)",margin:"0 0 16px"}},"Group sets with the same wear duration. Dates chain automatically in sequence."),
-
-        // Form
-        e("div",{style:{...sec,marginBottom:16}},
-          e("div",{style:{fontSize:13,fontWeight:500,marginBottom:12}},editIdx!==null?"Edit group":"Add group"),
-          e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",gap:10,alignItems:"end"}},
-            [["from","From set","1",1,24],["to","To set","4",1,24],["days","Days each","14",1,90]].map(([key,label,ph,min,max])=>
-              e("div",{key},
-                e("label",{style:{display:"block",fontSize:11,color:"var(--color-text-tertiary)",marginBottom:6,textTransform:"uppercase",letterSpacing:1}},label),
-                e("input",{type:"number",min,max,placeholder:ph,value:gf[key],
-                  onChange:ev=>setGf({...gf,[key]:ev.target.value}),style:{width:"100%"}}))),
-            e("div",{style:{display:"flex",gap:6}},
-              e("button",{className:"inv-btn",onClick:addGroup,style:{padding:"0 18px",height:36,borderRadius:"var(--border-radius-md)",background:"var(--color-background-info)",color:"var(--color-text-info)",border:"0.5px solid var(--color-border-info)",fontWeight:500,fontSize:14,whiteSpace:"nowrap"}},
-                editIdx!==null?"Save":"Add"),
-              editIdx!==null&&e("button",{className:"inv-btn",onClick:()=>{setEditIdx(null);setGf({from:"",to:"",days:""})},style:{padding:"0 10px",height:36,borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-tertiary)",background:"transparent",color:"var(--color-text-secondary)",fontSize:14}},"✕")))),
-
-        // Group list
-        cfg.groups.length===0
-          ?e("div",{style:{textAlign:"center",padding:"1.5rem",color:"var(--color-text-tertiary)",fontSize:14,border:"0.5px dashed var(--color-border-secondary)",borderRadius:"var(--border-radius-md)"}},"No groups yet. Add your first group above.")
-          :e("div",{style:{display:"flex",flexDirection:"column",gap:6}},
-            cfg.groups.map((g,i)=>
-              e("div",{key:i,style:{display:"flex",alignItems:"center",gap:12,...sec}},
-                e("span",{style:{fontFamily:"var(--font-mono)",fontSize:12,color:"var(--color-text-info)",background:"var(--color-background-info)",padding:"3px 10px",borderRadius:99,whiteSpace:"nowrap"}},`Sets ${g.from}–${g.to}`),
-                e("span",{style:{flex:1,fontSize:13}},e("strong",null,g.days)," days each ",e("span",{style:{color:"var(--color-text-tertiary)"}},`· ${(g.to-g.from+1)*g.days} days total`)),
-                e("button",{className:"inv-btn",onClick:()=>editGroup(i),style:{background:"transparent",border:"0.5px solid var(--color-border-tertiary)",borderRadius:"var(--border-radius-md)",padding:"4px 10px",fontSize:12,color:"var(--color-text-secondary)"}},"Edit"),
-                e("button",{className:"inv-btn",onClick:()=>deleteGroup(i),style:{background:"var(--color-background-danger)",border:"0.5px solid var(--color-border-danger)",borderRadius:"var(--border-radius-md)",padding:"4px 10px",fontSize:12,color:"var(--color-text-danger)"}},"Delete")))),
-
-        // Coverage map
-        cfg.groups.length>0&&e("div",{style:{marginTop:16}},
-          e("div",{style:{fontSize:11,color:"var(--color-text-tertiary)",textTransform:"uppercase",letterSpacing:1,marginBottom:8}},"Coverage map"),
-          e("div",{style:{display:"flex",gap:4,flexWrap:"wrap"}},
-            sets.map(s=>{
-              const st2=s.days?(s.start?(NOW>s.end?"done":cur?.id===s.id?"cur":"cfg"):"cfg"):"empty";
-              return e("div",{key:s.id,title:`Set ${s.id}: ${s.days?`${s.days}d`:"not configured"}`,
-                style:{width:28,height:28,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",
-                  fontSize:10,fontFamily:"var(--font-mono)",fontWeight:500,cursor:"default",
-                  background:st2==="empty"?"var(--color-background-secondary)":st2==="done"?"var(--color-background-success)":st2==="cur"?"var(--color-background-info)":"var(--color-background-info)",
-                  color:st2==="empty"?"var(--color-text-tertiary)":st2==="done"?"var(--color-text-success)":"var(--color-text-info)",
-                  border:`0.5px solid ${st2==="cur"?"var(--color-border-info)":"transparent"}`}},
-                s.id);
-            })),
-          e("div",{style:{display:"flex",gap:16,marginTop:10,flexWrap:"wrap"}},
-            [["var(--color-background-success)","var(--color-text-success)","Completed"],
-             ["var(--color-background-info)","var(--color-text-info)","Current / configured"],
-             ["var(--color-background-secondary)","var(--color-text-tertiary)","Not set"]].map(([bg2,col,label])=>
-              e("div",{key:label,style:{display:"flex",alignItems:"center",gap:6,fontSize:11,color:"var(--color-text-tertiary)"}},
-                e("div",{style:{width:10,height:10,borderRadius:2,background:bg2,border:`0.5px solid ${col}`}}),
-                label))))),
-
-      // Reset
-      e("div",{style:{...card,border:"0.5px solid var(--color-border-danger)",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}},
-        e("div",null,
-          e("div",{style:{fontWeight:500,marginBottom:4}},"Reset all data"),
-          e("div",{style:{fontSize:13,color:"var(--color-text-secondary)"}},"Clear all configuration and start fresh.")),
-        e("button",{className:"inv-btn",onClick:()=>{if(confirm("Reset all data? This cannot be undone."))save(INIT)},
-          style:{background:"var(--color-background-danger)",border:"0.5px solid var(--color-border-danger)",borderRadius:"var(--border-radius-md)",padding:"8px 18px",color:"var(--color-text-danger)",fontWeight:500,fontSize:14}},
-          "Reset data"))
-    )
-  );
+  const upcoming=sets.filter(s=>s.start&&s.end&&s.end>=NOW).slice(0,6);
+  const changedCount=Object.keys(cfg.changed||{}).length;
+  // compliance streak
+  const streak=(()=>{
+    let s=0;
+    for(let i=completedCount-1;i>=0;i--){if(cfg.changed?.[sets[i]?.id])s++;else break;}
+    return s;
+  })();
+  return{sets,cur,nextSet,daysIn,daysLeft,ringPct,changeToday,changeTomorrow,isChanged,
+    completedCount,configuredCount,totalDays,firstStart,daysInTreatment,estEnd,overallPct,upcoming,streak,changedCount};
 }
 
-ReactDOM.createRoot(document.getElementById("app")).render(React.createElement(App));
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+function renderDash(d){
+  const{cfg,now:NOW}=state;
+  const{sets,cur,nextSet,daysIn,daysLeft,ringPct,changeToday,changeTomorrow,isChanged,
+    completedCount,configuredCount,totalDays,daysInTreatment,estEnd,overallPct,upcoming,streak,changedCount}=d;
+  const frag=document.createDocumentFragment();
+
+  // Alert banner
+  if(changeToday&&!isChanged){
+    frag.appendChild(h("div",{class:"alert alert-warn fadein"},
+      h("div",{style:{fontSize:"1.3rem"}},"⚠️"),
+      h("div",{},
+        h("div",{style:{fontWeight:"600",color:"var(--warn)",marginBottom:".15rem"}},`Time to change! — Set ${cur.id} ends today`),
+        h("div",{style:{fontSize:"13px",color:"var(--warn)",opacity:".85"}},
+          nextSet?.start?`Switch to Set ${cur.id+1} today. It runs until ${fmts(nextSet.end)}.`:`Switch to Set ${cur.id+1} today.`)
+      )
+    ));
+  } else if(changeToday&&isChanged){
+    frag.appendChild(h("div",{class:"alert alert-success fadein"},
+      h("div",{style:{fontSize:"1.3rem"}},"✅"),
+      h("div",{style:{fontWeight:"600",color:"var(--accent)"}},`Set ${cur.id} complete! You've moved to Set ${cur.id+1}. Great work!`)
+    ));
+  } else if(changeTomorrow){
+    frag.appendChild(h("div",{class:"alert alert-info fadein"},
+      h("div",{style:{fontSize:"1.2rem"}},"📅"),
+      h("div",{style:{fontSize:"14px",color:"var(--info)"}},
+        "Heads up — change aligners ",h("strong",{},"tomorrow"),` (Set ${cur.id} → Set ${cur.id+1})`)
+    ));
+  }
+
+  // Hero card
+  if(cur){
+    const ringColor=changeToday?"var(--warn)":"var(--accent)";
+    frag.appendChild(h("div",{class:"card fadein"},
+      h("div",{style:{display:"flex",gap:"1.5rem",alignItems:"center",flexWrap:"wrap"}},
+        h("div",{class:"ring-wrap"},
+          hsvg(Ring({pct:ringPct,size:112,thick:9,color:ringColor})),
+          h("div",{class:"ring-label"},
+            h("span",{class:"mono",style:{fontSize:"2rem",fontWeight:"500",lineHeight:"1",color:ringColor}},String(cur.id)),
+            h("span",{style:{fontSize:"11px",color:"var(--text3)"}},"of 24")
+          )
+        ),
+        h("div",{style:{flex:"1",minWidth:"200px"}},
+          h("div",{style:{display:"flex",alignItems:"center",gap:".5rem",marginBottom:".625rem",flexWrap:"wrap"}},
+            h("h2",{class:"display",style:{fontSize:"1.5rem",fontWeight:"300"}},`Set ${cur.id}`),
+            h("span",{class:`badge ${isChanged?"badge-accent":changeToday?"badge-warn":"badge-info"}`},
+              isChanged?"✓ Changed":changeToday?"Change today!":"● Active")
+          ),
+          h("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:".5rem",marginBottom:".875rem"}},
+            ...[["Day in set",`${daysIn} / ${cur.days}`,false],
+               ["Days left",`${daysLeft}`,daysLeft<=2],
+               ["Change date",fmts(cur.end),changeToday]
+            ].map(([label,val,warn])=>
+              h("div",{class:"card-xs"},
+                h("div",{style:{fontSize:"11px",color:"var(--text3)",marginBottom:".2rem"}},label),
+                h("div",{class:"mono",style:{fontSize:"15px",fontWeight:"500",color:warn?"var(--warn)":"var(--text)"}},val)
+              )
+            )
+          ),
+          h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:".5rem"}},
+            h("span",{style:{fontSize:"12px",color:"var(--text3)"}},`${fmts(cur.start)} → ${fmts(cur.end)}`),
+            h("button",{
+              class:`btn ${isChanged?"btn-ghost":"btn-accent"}`,
+              onClick:()=>{
+                const ch={...(cfg.changed||{})};
+                if(ch[cur.id])delete ch[cur.id];else ch[cur.id]=iso(NOW);
+                saveState({...cfg,changed:ch});
+              }
+            },isChanged?"✕  Unmark changed":"✓  Mark as changed")
+          )
+        )
+      )
+    ));
+
+    // Next set preview
+    if(nextSet&&nextSet.start){
+      frag.appendChild(h("div",{class:"card-xs fadein",style:{display:"flex",alignItems:"center",gap:".75rem",flexWrap:"wrap"}},
+        h("span",{style:{fontSize:"12px",color:"var(--text3)"}},"Next up:"),
+        h("span",{class:"mono",style:{fontSize:"13px",fontWeight:"500"}},`Set ${nextSet.id}`),
+        h("span",{class:"badge badge-muted"},`${nextSet.days}d`),
+        h("span",{style:{fontSize:"12px",color:"var(--text2)"}},`${fmts(nextSet.start)} → ${fmts(nextSet.end)}`)
+      ));
+    }
+  } else {
+    const allDone=completedCount>=configuredCount&&configuredCount>0;
+    frag.appendChild(h("div",{class:"card fadein",style:{textAlign:"center",padding:"2.5rem 1.5rem"}},
+      h("div",{style:{fontSize:"3rem",marginBottom:".75rem"}},allDone?"🏆":configuredCount>0?"📅":"🦷"),
+      h("h3",{class:"display",style:{fontSize:"1.5rem",fontWeight:"300",marginBottom:".5rem"}},
+        allDone?"Treatment complete!":configuredCount>0?"Setup required":"Welcome"),
+      h("p",{style:{color:"var(--text2)",fontSize:"13px",marginBottom:"1rem"}},
+        allDone?`All ${completedCount} sets finished. Congratulations! 🎉`:
+        configuredCount>0?"Add your aligner groups and a start date to begin.":
+        "Configure your 24 aligner sets to start tracking."),
+      !allDone&&h("button",{class:"btn btn-accent",onClick:()=>setState({tab:"setup"})},"Go to Setup →")
+    ));
+  }
+
+  // Overall progress
+  frag.appendChild(h("div",{class:"card fadein"},
+    h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:".75rem"}},
+      h("div",{style:{fontWeight:"500",fontSize:"14px"}},"Overall progress"),
+      h("div",{class:"mono",style:{fontSize:"14px",color:"var(--accent)"}},`${Math.round(overallPct*100)}%`)
+    ),
+    h("div",{class:"progress-track",style:{marginBottom:"1rem"}},
+      h("div",{class:"progress-fill",style:{width:`${overallPct*100}%`,background:"var(--accent)"}})
+    ),
+    h("div",{class:"stat-grid"},
+      ...[["Sets done",`${completedCount}/24`],["Days in tx",daysInTreatment?`${daysInTreatment}d`:"—"],
+          ["Total days",totalDays?`${totalDays}d`:"—"],["Est. finish",estEnd?fmts(estEnd):"—"]
+      ].map(([label,val])=>
+        h("div",{class:"stat-item"},
+          h("div",{style:{fontSize:"11px",color:"var(--text3)",marginBottom:".25rem"}},label),
+          h("div",{class:"mono",style:{fontSize:"15px",fontWeight:"500"}},val)
+        )
+      )
+    )
+  ));
+
+  // Compliance / streak
+  if(completedCount>0){
+    const completedSets=sets.filter(s=>s.end);
+    const dots=completedSets.map(s=>{
+      const changed=!!(cfg.changed?.[s.id]);
+      return h("div",{
+        class:"streak-dot",
+        title:`Set ${s.id}: ${changed?"Changed ✓":"Not marked"}`,
+        style:{background:changed?"var(--accent)":"var(--bg4)",border:`1px solid ${changed?"rgba(126,232,196,.3)":"var(--border)"}`}
+      });
+    });
+    frag.appendChild(h("div",{class:"card fadein"},
+      h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:".375rem",flexWrap:"wrap",gap:".5rem"}},
+        h("div",{style:{fontWeight:"500",fontSize:"14px"}},"Change compliance"),
+        streak>0?h("span",{class:"badge badge-warn"},`🔥 ${streak} in a row`):null
+      ),
+      h("div",{style:{fontSize:"12px",color:"var(--text3)",marginBottom:".625rem"}},
+        `${changedCount} of ${completedCount} completed sets marked changed`),
+      h("div",{class:"streak-bar"},...dots)
+    ));
+  }
+
+  // Upcoming changes
+  if(upcoming.length>1){
+    frag.appendChild(h("div",{class:"card fadein"},
+      h("h3",{style:{fontSize:"14px",fontWeight:"500",marginBottom:".75rem"}},"Upcoming changes"),
+      h("div",{style:{display:"flex",flexDirection:"column",gap:".25rem"}},
+        ...upcoming.map(s=>{
+          const du=diff(NOW,s.end),isCur=cur?.id===s.id;
+          return h("div",{class:`upcoming-row${isCur?" active-row":""}`},
+            h("div",{class:"mono",style:{width:"28px",textAlign:"center",fontWeight:"500",color:isCur?"var(--accent)":"var(--text2)",fontSize:"15px"}},s.id),
+            h("div",{style:{flex:"1",fontSize:"13px"}},
+              h("span",{style:{fontWeight:"500"}},`Set ${s.id}`),
+              h("span",{style:{color:"var(--text3)",marginLeft:".35rem"}},`→ change ${fmts(s.end)}`)
+            ),
+            h("div",{class:"mono",style:{fontSize:"12px",color:du<=2?"var(--warn)":"var(--text3)"}},
+              isCur?(daysLeft===0?"today!":`${daysLeft}d left`):`in ${du}d`)
+          );
+        })
+      )
+    ));
+  }
+
+  return frag;
+}
+
+// ── Timeline ──────────────────────────────────────────────────────────────────
+function renderTimeline(d){
+  const{cfg,now:NOW}=state;
+  const{sets,cur}=d;
+  const frag=document.createDocumentFragment();
+  let filter="all";
+  const tbody=document.createElement("tbody");
+
+  function buildRows(){
+    tbody.innerHTML="";
+    sets.forEach(s=>{
+      const isPast=s.end&&NOW>s.end;
+      const isCur=cur?.id===s.id;
+      const isUp=s.start&&s.end&&!isPast&&!isCur;
+      if(filter==="completed"&&!isPast)return;
+      if(filter==="upcoming"&&!isUp&&!isCur)return;
+      const ch=!!(cfg.changed?.[s.id]);
+      const row=document.createElement("tr");
+      row.className=isCur?"row-active":isPast?"row-done":"";
+      const status=!s.start?"Not set":isPast?"Done":isCur?"Active":"Upcoming";
+      const statusBadge=status==="Active"?`<span class="badge badge-accent">● Active</span>`
+        :status==="Done"?`<span class="badge badge-muted">✓ Done</span>`
+        :status==="Upcoming"?`<span class="badge badge-info">Upcoming</span>`
+        :`<span class="badge badge-muted" style="color:var(--text3)">Not set</span>`;
+      const note=cfg.notes?.[s.id]||"";
+      row.innerHTML=`
+        <td><span class="mono" style="font-size:15px;font-weight:500;color:${isCur?"var(--accent)":isPast?"var(--text3)":"var(--text)"}">${s.id}</span></td>
+        <td><span class="mono">${s.days?s.days+"d":"—"}</span></td>
+        <td style="color:var(--text2);white-space:nowrap">${s.start?fmts(s.start):"—"}</td>
+        <td style="white-space:nowrap;color:${isCur?"var(--accent)":"var(--text2)"}">${s.end?fmts(s.end):"—"}</td>
+        <td>${statusBadge}</td>
+        <td>${isPast||isCur?`<button class="btn btn-ghost" style="padding:.2rem .55rem;font-size:11px;${ch?"background:rgba(126,232,196,.08);border-color:rgba(126,232,196,.3);color:var(--accent)":""}" data-toggle="${s.id}">${ch?"✓ Done":"Mark"}</button>`:`<span style="color:var(--text3)">—</span>`}</td>
+        <td><input type="text" value="${note.replace(/"/g,'&quot;')}" placeholder="Add note…" style="width:130px;padding:.25rem .5rem;font-size:12px" data-note="${s.id}"/></td>`;
+      tbody.appendChild(row);
+    });
+    tbody.querySelectorAll("[data-toggle]").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const id=parseInt(btn.dataset.toggle);
+        const ch2={...(cfg.changed||{})};
+        if(ch2[id])delete ch2[id];else ch2[id]=iso(NOW);
+        saveState({...cfg,changed:ch2});
+      });
+    });
+    tbody.querySelectorAll("[data-note]").forEach(inp=>{
+      inp.addEventListener("change",()=>{
+        const id=parseInt(inp.dataset.note);
+        const notes2={...(cfg.notes||{}),[id]:inp.value};
+        saveState({...cfg,notes:notes2});
+      });
+    });
+  }
+
+  const filterBtns=["All","Upcoming","Completed"].map(lbl=>{
+    const isActive=lbl.toLowerCase()===filter;
+    const btn=h("button",{
+      class:`btn btn-ghost`,
+      style:isActive?"background:var(--bg3);border-color:var(--border2);color:var(--text)":"",
+      onClick:()=>{
+        filter=lbl.toLowerCase();
+        filterBtns.forEach(b=>{b.style.background="";b.style.color="";b.style.borderColor="";});
+        btn.style.background="var(--bg3)";btn.style.color="var(--text)";btn.style.borderColor="var(--border2)";
+        buildRows();
+      }
+    },lbl);
+    return btn;
+  });
+
+  buildRows();
+  frag.appendChild(h("div",{class:"card fadein"},
+    h("h3",{style:{fontSize:"14px",fontWeight:"500",marginBottom:".75rem"}},"All 24 aligner sets"),
+    h("div",{style:{display:"flex",gap:".375rem",marginBottom:".875rem",flexWrap:"wrap"}},...filterBtns),
+    h("div",{style:{overflowX:"auto"}},
+      h("table",{class:"tbl"},
+        h("thead",{},h("tr",{},
+          ...["#","Days","Start","Change date","Status","Changed","Notes"].map(lbl=>h("th",{},lbl))
+        )),
+        tbody
+      )
+    )
+  ));
+  return frag;
+}
+
+// ── Setup ─────────────────────────────────────────────────────────────────────
+function renderSetup(d){
+  const{cfg}=state;
+  const{sets,cur}=d;
+  const frag=document.createDocumentFragment();
+
+  // Start date
+  frag.appendChild(h("div",{class:"card fadein"},
+    h("h3",{style:{fontSize:"14px",fontWeight:"500",marginBottom:".3rem"}},"Treatment start date"),
+    h("p",{class:"helper",style:{marginBottom:".875rem"}},"The first day you put in Set 1."),
+    h("div",{style:{display:"flex",gap:".5rem",alignItems:"center",maxWidth:"260px"}},
+      (()=>{
+        const inp=h("input",{type:"date",value:cfg.startDate});
+        inp.addEventListener("change",e=>saveState({...cfg,startDate:e.target.value}));
+        return inp;
+      })(),
+      cfg.startDate?h("span",{style:{color:"var(--accent)",fontSize:"1.1rem"}},"✓"):null
+    )
+  ));
+
+  // Groups
+  frag.appendChild(h("div",{class:"card fadein"},
+    h("h3",{style:{fontSize:"14px",fontWeight:"500",marginBottom:".3rem"}},"Aligner groups"),
+    h("p",{class:"helper",style:{marginBottom:"1rem"}},"Assign the same wear duration to a range of sets. Dates chain automatically from your start date."),
+
+    // Form
+    (()=>{
+      const wrap=h("div",{class:"card-sm",style:{marginBottom:"1rem"}});
+      wrap.appendChild(h("div",{style:{fontSize:"13px",fontWeight:"500",marginBottom:".75rem"}},state.editIdx!==null?"Edit group":"Add group"));
+      const grid=h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",gap:".625rem",alignItems:"end"}});
+      const inputs={};
+      for(const[key,label,ph,mn,mx]of[["from","From set","1",1,24],["to","To set","4",1,24],["days","Days each","14",1,90]]){
+        const div=h("div",{});
+        div.appendChild(h("label",{class:"field-label"},label));
+        const inp=h("input",{type:"number",min:String(mn),max:String(mx),placeholder:ph,value:state.gf[key]});
+        inp.addEventListener("input",e=>{state.gf[key]=e.target.value;});
+        inputs[key]=inp;
+        div.appendChild(inp);
+        grid.appendChild(div);
+      }
+      const bwrap=h("div",{style:{display:"flex",gap:".375rem"}});
+      const addBtn=h("button",{class:"btn btn-accent",onClick:()=>{
+        const from=parseInt(inputs.from.value),to=parseInt(inputs.to.value),days=parseInt(inputs.days.value);
+        if(!from||!to||!days||from>to||from<1||to>24||days<1){
+          const orig=addBtn.textContent;addBtn.textContent="Check values";
+          setTimeout(()=>addBtn.textContent=orig,1500);return;
+        }
+        let groups=[...cfg.groups];
+        if(state.editIdx!==null){groups[state.editIdx]={from,to,days};state.editIdx=null;}
+        else groups.push({from,to,days});
+        groups.sort((a,b)=>a.from-b.from);
+        state.gf={from:"",to:"",days:""};
+        saveState({...cfg,groups});
+      }},state.editIdx!==null?"Save":"+ Add");
+      bwrap.appendChild(addBtn);
+      if(state.editIdx!==null){
+        bwrap.appendChild(h("button",{class:"btn btn-ghost",onClick:()=>{state.editIdx=null;state.gf={from:"",to:"",days:""};render();}},"✕"));
+      }
+      grid.appendChild(bwrap);
+      wrap.appendChild(grid);
+      return wrap;
+    })(),
+
+    // List
+    cfg.groups.length===0
+      ?h("div",{style:{textAlign:"center",padding:"1.25rem",color:"var(--text3)",fontSize:"13px",border:"1px dashed var(--border)",borderRadius:"var(--radius2)"}},"No groups yet — add one above.")
+      :h("div",{style:{display:"flex",flexDirection:"column",gap:".375rem"}},
+        ...cfg.groups.map((g,i)=>
+          h("div",{class:"card-xs",style:{display:"flex",alignItems:"center",gap:".75rem",flexWrap:"wrap"}},
+            h("span",{class:"badge badge-info"},`Sets ${g.from}–${g.to}`),
+            h("span",{style:{flex:"1",fontSize:"13px"}},
+              h("strong",{},g.days)," days each ",
+              h("span",{style:{color:"var(--text3)"}},`· ${(g.to-g.from+1)*g.days} days total`)
+            ),
+            h("button",{class:"btn btn-ghost",style:{padding:".25rem .6rem",fontSize:"12px"},onClick:()=>{
+              state.gf={from:String(g.from),to:String(g.to),days:String(g.days)};
+              state.editIdx=i;render();
+            }},"Edit"),
+            h("button",{class:"btn btn-danger",style:{padding:".25rem .6rem",fontSize:"12px"},onClick:()=>{
+              saveState({...cfg,groups:cfg.groups.filter((_,idx)=>idx!==i)});
+            }},"Delete")
+          )
+        )
+      ),
+
+    // Coverage map
+    cfg.groups.length>0&&h("div",{style:{marginTop:"1rem"}},
+      h("div",{style:{fontSize:"11px",color:"var(--text3)",textTransform:"uppercase",letterSpacing:".07em",marginBottom:".5rem"}},"Coverage map"),
+      h("div",{class:"set-grid"},
+        ...sets.map(s=>{
+          const st=s.days?(s.start?(state.now>s.end?"done":cur?.id===s.id?"cur":"cfg"):"cfg"):"empty";
+          return h("div",{class:`set-pip pip-${st}`,title:`Set ${s.id}: ${s.days?s.days+"d":"not set"}`},String(s.id));
+        })
+      ),
+      h("div",{style:{display:"flex",gap:".875rem",marginTop:".625rem",flexWrap:"wrap"}},
+        ...([["pip-done","Completed"],["pip-cur","Active"],["pip-cfg","Configured"],["pip-empty","Not set"]]).map(([cls,lbl])=>
+          h("div",{style:{display:"flex",alignItems:"center",gap:".35rem",fontSize:"11px",color:"var(--text3)"}},
+            h("div",{class:`set-pip ${cls}`,style:{width:"12px",height:"12px",borderRadius:"3px",flexShrink:"0"}}),lbl)
+        )
+      )
+    )
+  ));
+
+  // Reset
+  frag.appendChild(h("div",{class:"card fadein",style:{border:"1px solid rgba(242,117,117,.2)",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:".75rem"}},
+    h("div",{},
+      h("div",{style:{fontWeight:"500",marginBottom:".25rem"}},"Reset all data"),
+      h("div",{style:{fontSize:"13px",color:"var(--text2)"}},"Clear all configuration and start fresh.")
+    ),
+    h("button",{class:"btn btn-danger",onClick:()=>{
+      if(confirm("Reset all data? This cannot be undone.")){
+        state.gf={from:"",to:"",days:""};state.editIdx=null;
+        saveState(INIT);
+      }
+    }},"Reset")
+  ));
+
+  return frag;
+}
+
+// ── Main render ───────────────────────────────────────────────────────────────
+function render(){
+  const{cfg,tab}=state;
+  const d=getDerived();
+  const root=document.getElementById("root");
+  root.innerHTML="";
+
+  // Header
+  const header=h("div",{style:{marginBottom:"1.5rem"}},
+    h("div",{style:{display:"flex",alignItems:"flex-start",justifyContent:"space-between",flexWrap:"wrap",gap:".75rem",marginBottom:"1rem"}},
+      h("div",{},
+        h("div",{style:{display:"flex",alignItems:"center",gap:".75rem",marginBottom:".25rem"}},
+          h("span",{style:{fontSize:"1.75rem"}},"🦷"),
+          h("h1",{class:"display",style:{fontSize:"1.75rem",fontWeight:"300"}},"Invisalign Tracker")
+        ),
+        h("p",{style:{fontSize:"12px",color:"var(--text3)"}},
+          `${d.configuredCount}/24 sets configured · ${d.completedCount} done · ${d.totalDays} total days`)
+      ),
+      d.estEnd&&h("div",{class:"card-xs",style:{textAlign:"right"}},
+        h("div",{style:{fontSize:"10px",color:"var(--text3)",textTransform:"uppercase",letterSpacing:".07em",marginBottom:".2rem"}},"Est. finish"),
+        h("div",{class:"mono",style:{fontSize:"14px",fontWeight:"500"}},fmt(d.estEnd))
+      )
+    ),
+    h("div",{class:"tabs"},
+      ...([["dash","Dashboard"],["timeline","Timeline"],["setup","Setup"]]).map(([id,label])=>
+        h("button",{class:`tab${tab===id?" active":""}`,onClick:()=>setState({tab:id})},label)
+      )
+    )
+  );
+  root.appendChild(header);
+
+  const content=h("div",{class:"section-gap"});
+  if(tab==="dash")content.appendChild(renderDash(d));
+  else if(tab==="timeline")content.appendChild(renderTimeline(d));
+  else content.appendChild(renderSetup(d));
+  root.appendChild(content);
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+loadState();
+render();
+setInterval(()=>{state.now=tod0();render();},60000);
 </script>
+</body>
+</html>
