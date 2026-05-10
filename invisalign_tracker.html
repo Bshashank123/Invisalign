@@ -1,0 +1,342 @@
+
+<style>
+  input[type=date],input[type=number]{background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);color:var(--color-text-primary);padding:8px 12px;border-radius:var(--border-radius-md);font-family:var(--font-sans);font-size:14px;outline:none;width:100%}
+  input[type=date]:focus,input[type=number]:focus{border-color:var(--color-border-info);box-shadow:0 0 0 2px rgba(24,95,165,.15)}
+  input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+  .inv-btn{cursor:pointer;font-family:var(--font-sans);transition:opacity .15s,transform .1s}
+  .inv-btn:hover{opacity:.85}.inv-btn:active{transform:scale(.98)}
+  .row-hover:hover{background:var(--color-background-secondary)!important}
+  @keyframes inv-fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .inv-fade{animation:inv-fade .3s ease forwards}
+</style>
+
+<div id="app" style="padding:0 0 2rem"></div>
+
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script>
+const {useState,useEffect,useMemo}=React;
+const KEY="inv-v2";
+const INIT={startDate:"",groups:[],changed:{}};
+const pd=s=>{if(!s)return null;const d=new Date(s+"T00:00:00");return isNaN(d.getTime())?null:d};
+const fmt=d=>d?d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}):"—";
+const fmts=d=>d?d.toLocaleDateString("en-US",{month:"short",day:"numeric"}):"—";
+const addD=(d,n)=>{const r=new Date(d);r.setDate(r.getDate()+n);return r};
+const diff=(a,b)=>Math.round((+b-+a)/86400000);
+const iso=d=>d.toISOString().split("T")[0];
+const tod0=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+
+function Ring({pct,size=100,thick=8,color}){
+  const r=(size-thick)/2,c=2*Math.PI*r,fill=c*Math.min(Math.max(pct,0),1);
+  return React.createElement("svg",{width:size,height:size,style:{transform:"rotate(-90deg)"}},
+    React.createElement("circle",{cx:size/2,cy:size/2,r,fill:"none",stroke:"var(--color-border-tertiary)",strokeWidth:thick}),
+    React.createElement("circle",{cx:size/2,cy:size/2,r,fill:"none",stroke:color||"var(--color-text-info)",strokeWidth:thick,
+      strokeDasharray:`${fill} ${c}`,strokeLinecap:"round",style:{transition:"stroke-dasharray .6s ease"}}));
+}
+
+function App(){
+  const[cfg,setCfg]=useState(INIT);
+  const[ready,setReady]=useState(false);
+  const[tab,setTab]=useState("dash");
+  const[gf,setGf]=useState({from:"",to:"",days:""});
+  const[editIdx,setEditIdx]=useState(null);
+
+  useEffect(()=>{
+    (async()=>{
+      try{const r=await window.storage.get(KEY);if(r?.value)setCfg(JSON.parse(r.value))}catch{}
+      setReady(true);
+    })();
+  },[]);
+
+  const save=async next=>{setCfg(next);try{await window.storage.set(KEY,JSON.stringify(next))}catch{}};
+
+  const sets=useMemo(()=>{
+    const arr=Array.from({length:24},(_,i)=>({id:i+1,days:null,start:null,end:null}));
+    for(const g of cfg.groups)for(let i=g.from-1;i<Math.min(g.to,24);i++)arr[i].days=g.days;
+    if(cfg.startDate){
+      let cur=pd(cfg.startDate);
+      for(let i=0;i<24;i++){
+        if(!cur||!arr[i].days)continue;
+        arr[i].start=new Date(cur);
+        arr[i].end=addD(cur,arr[i].days-1);
+        cur=addD(cur,arr[i].days);
+      }
+    }
+    return arr;
+  },[cfg]);
+
+  const NOW=tod0();
+  const cur=useMemo(()=>sets.find(s=>s.start&&s.end&&NOW>=s.start&&NOW<=s.end),[sets]);
+  const daysIn=cur?diff(cur.start,NOW)+1:0;
+  const daysLeft=cur?diff(NOW,cur.end):0;
+  const ringPct=cur?.days?daysIn/cur.days:0;
+  const changeToday=daysLeft===0&&!!cur;
+  const changeTomorrow=daysLeft===1&&!!cur;
+  const isChanged=cur?!!(cfg.changed?.[cur.id]):false;
+  const completedCount=sets.filter(s=>s.end&&NOW>s.end).length;
+  const configuredCount=sets.filter(s=>s.days!==null).length;
+  const totalDays=sets.reduce((a,s)=>a+(s.days||0),0);
+  const firstStart=cfg.startDate?pd(cfg.startDate):null;
+  const daysInTreatment=firstStart?Math.max(0,diff(firstStart,NOW)):0;
+  const lastCfg=[...sets].reverse().find(s=>s.end);
+  const estEnd=lastCfg?.end;
+  const overallPct=totalDays>0&&firstStart?Math.min(1,daysInTreatment/totalDays):0;
+  const upcoming=sets.filter(s=>s.start&&s.end&&s.end>=NOW).slice(0,5);
+
+  const markChanged=()=>{
+    if(!cur)return;
+    const ch={...(cfg.changed||{})};
+    if(ch[cur.id])delete ch[cur.id];else ch[cur.id]=iso(NOW);
+    save({...cfg,changed:ch});
+  };
+
+  const addGroup=()=>{
+    const from=parseInt(gf.from),to=parseInt(gf.to),days=parseInt(gf.days);
+    if(!from||!to||!days||from>to||from<1||to>24||days<1)return;
+    let groups=[...cfg.groups];
+    if(editIdx!==null){groups[editIdx]={from,to,days};setEditIdx(null);}
+    else groups.push({from,to,days});
+    groups.sort((a,b)=>a.from-b.from);
+    save({...cfg,groups});
+    setGf({from:"",to:"",days:""});
+  };
+
+  const deleteGroup=i=>save({...cfg,groups:cfg.groups.filter((_,idx)=>idx!==i)});
+  const editGroup=i=>{setGf({from:String(cfg.groups[i].from),to:String(cfg.groups[i].to),days:String(cfg.groups[i].days)});setEditIdx(i)};
+
+  const getStatus=s=>{
+    if(!s.start)return"unconfigured";
+    if(NOW>s.end)return"completed";
+    if(cur?.id===s.id)return"current";
+    return"upcoming";
+  };
+
+  const e=React.createElement;
+  const card={background:"var(--color-background-primary)",border:"0.5px solid var(--color-border-tertiary)",borderRadius:"var(--border-radius-lg)",padding:"1.25rem"};
+  const sec={background:"var(--color-background-secondary)",borderRadius:"var(--border-radius-md)",padding:"12px"};
+
+  if(!ready)return e("div",{style:{padding:"2rem",textAlign:"center",color:"var(--color-text-tertiary)"}},"Loading...");
+
+  return e("div",{style:{padding:"0 0 2rem"}},
+    e("h2",{className:"sr-only"},"Invisalign Treatment Tracker"),
+
+    // Header
+    e("div",{style:{borderBottom:"0.5px solid var(--color-border-tertiary)",paddingBottom:"1rem",marginBottom:"1.25rem"}},
+      e("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}},
+        e("div",null,
+          e("h2",{style:{fontSize:22,fontWeight:500,margin:0,lineHeight:1.2}},
+            e("i",{className:"ti ti-tooth","aria-hidden":"true",style:{marginRight:8}}),
+            "Invisalign tracker"),
+          e("p",{style:{fontSize:13,color:"var(--color-text-secondary)",margin:"4px 0 0"}},
+            `${configuredCount}/24 sets configured · ${completedCount} completed · ${totalDays} total days`)),
+        estEnd&&e("div",{style:{...sec,padding:"8px 16px",textAlign:"right"}},
+          e("div",{style:{fontSize:11,color:"var(--color-text-tertiary)",textTransform:"uppercase",letterSpacing:1,marginBottom:4}},"Est. completion"),
+          e("div",{style:{fontSize:15,fontWeight:500,fontFamily:"var(--font-mono)"}},fmt(estEnd)))),
+
+      e("div",{style:{display:"flex",gap:4,marginTop:"1rem"}},
+        [["dash","Dashboard"],["timeline","Timeline"],["setup","Setup"]].map(([id,label])=>
+          e("button",{key:id,className:"inv-btn",onClick:()=>setTab(id),style:{
+            padding:"6px 18px",borderRadius:"var(--border-radius-md)",fontSize:14,fontWeight:500,
+            border:tab===id?"0.5px solid var(--color-border-primary)":"0.5px solid transparent",
+            background:tab===id?"var(--color-background-primary)":"transparent",
+            color:tab===id?"var(--color-text-primary)":"var(--color-text-secondary)"}},label)))),
+
+    // DASHBOARD
+    tab==="dash"&&e("div",{className:"inv-fade",style:{display:"flex",flexDirection:"column",gap:"1rem"}},
+      // Alerts
+      changeToday&&!isChanged&&e("div",{style:{background:"var(--color-background-warning)",border:"0.5px solid var(--color-border-warning)",borderRadius:"var(--border-radius-md)",padding:"12px 16px",display:"flex",alignItems:"center",gap:10}},
+        e("i",{className:"ti ti-bell-ringing",style:{fontSize:20,color:"var(--color-text-warning)"},"aria-hidden":"true"}),
+        e("div",null,
+          e("div",{style:{fontWeight:500,color:"var(--color-text-warning)"}},"Time to change aligners!"),
+          e("div",{style:{fontSize:13,color:"var(--color-text-warning)"}},`Today is the last day of Set ${cur.id}. Switch to Set ${cur.id+1}.`))),
+      changeToday&&isChanged&&e("div",{style:{background:"var(--color-background-success)",border:"0.5px solid var(--color-border-success)",borderRadius:"var(--border-radius-md)",padding:"12px 16px",display:"flex",alignItems:"center",gap:10}},
+        e("i",{className:"ti ti-circle-check",style:{fontSize:20,color:"var(--color-text-success)"},"aria-hidden":"true"}),
+        e("div",{style:{fontWeight:500,color:"var(--color-text-success)"}},`Set ${cur.id} complete! You've changed to Set ${cur.id+1}.`)),
+      changeTomorrow&&e("div",{style:{background:"var(--color-background-info)",border:"0.5px solid var(--color-border-info)",borderRadius:"var(--border-radius-md)",padding:"12px 16px",display:"flex",alignItems:"center",gap:10}},
+        e("i",{className:"ti ti-calendar-event",style:{fontSize:20,color:"var(--color-text-info)"},"aria-hidden":"true"}),
+        e("div",{style:{fontSize:14,color:"var(--color-text-info)"}},
+          "Reminder: change aligners ",e("strong",null,"tomorrow"),` (Set ${cur.id} → Set ${cur.id+1})`)),
+
+      // Current set hero
+      cur?e("div",{style:{...card,display:"grid",gridTemplateColumns:"auto 1fr",gap:"1.25rem",alignItems:"center"}},
+        e("div",{style:{position:"relative",width:104,height:104,flexShrink:0}},
+          e(Ring,{pct:ringPct,size:104,thick:9,color:changeToday?"var(--color-text-warning)":"var(--color-text-info)"}),
+          e("div",{style:{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}},
+            e("span",{style:{fontSize:28,fontWeight:500,fontFamily:"var(--font-mono)",lineHeight:1}},cur.id),
+            e("span",{style:{fontSize:11,color:"var(--color-text-tertiary)"}},"of 24"))),
+        e("div",null,
+          e("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:12}},
+            e("h3",{style:{fontSize:18,fontWeight:500,margin:0}},`Set ${cur.id}`),
+            e("span",{style:{fontSize:12,padding:"3px 10px",borderRadius:99,
+              background:isChanged?"var(--color-background-success)":changeToday?"var(--color-background-warning)":"var(--color-background-info)",
+              color:isChanged?"var(--color-text-success)":changeToday?"var(--color-text-warning)":"var(--color-text-info)"}},
+              isChanged?"Changed ✓":changeToday?"Change today!":"Active")),
+          e("div",{style:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:12}},
+            [["Day in set",`${daysIn} / ${cur.days}`,false],
+             ["Days remaining",`${daysLeft}`,daysLeft<=2],
+             ["Change date",fmts(cur.end),changeToday]].map(([label,val,warn])=>
+              e("div",{key:label,style:sec},
+                e("div",{style:{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:4}},label),
+                e("div",{style:{fontSize:16,fontWeight:500,fontFamily:"var(--font-mono)",color:warn?"var(--color-text-warning)":"var(--color-text-primary)"}},val)))),
+          e("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",fontSize:13,color:"var(--color-text-secondary)",flexWrap:"wrap",gap:8}},
+            e("span",null,`${fmt(cur.start)} → ${fmt(cur.end)}`),
+            e("button",{className:"inv-btn",onClick:markChanged,style:{
+              padding:"7px 16px",borderRadius:"var(--border-radius-md)",fontSize:13,fontWeight:500,
+              background:isChanged?"var(--color-background-success)":"var(--color-background-info)",
+              color:isChanged?"var(--color-text-success)":"var(--color-text-info)",
+              border:isChanged?"0.5px solid var(--color-border-success)":"0.5px solid var(--color-border-info)"}},
+              e("i",{className:`ti ti-${isChanged?"x":"check"}`,"aria-hidden":"true",style:{marginRight:6}}),
+              isChanged?"Unmark changed":"Mark as changed"))))
+      :e("div",{style:{...card,textAlign:"center",padding:"2.5rem"}},
+        cfg.startDate&&configuredCount>0
+          ?[e("i",{key:"t",className:"ti ti-trophy",style:{fontSize:40,color:"var(--color-text-warning)"},"aria-hidden":"true"}),
+            e("h3",{key:"h",style:{fontSize:18,fontWeight:500,margin:"12px 0 6px"}},"Treatment complete!"),
+            e("p",{key:"p",style:{color:"var(--color-text-secondary)",fontSize:14}},`All ${completedCount} sets finished.`)]
+          :[e("i",{key:"i",className:"ti ti-settings",style:{fontSize:40,color:"var(--color-text-tertiary)"},"aria-hidden":"true"}),
+            e("h3",{key:"h",style:{fontSize:18,fontWeight:500,margin:"12px 0 6px"}},"Setup required"),
+            e("p",{key:"p",style:{color:"var(--color-text-secondary)",fontSize:14,marginBottom:16}},"Configure your aligner sets to get started."),
+            e("button",{key:"b",className:"inv-btn",onClick:()=>setTab("setup"),style:{padding:"8px 20px",borderRadius:"var(--border-radius-md)",fontSize:14,background:"var(--color-background-info)",color:"var(--color-text-info)",border:"0.5px solid var(--color-border-info)"}},"Go to setup →")]),
+
+      // Overall progress
+      e("div",{style:card},
+        e("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}},
+          e("div",{style:{fontSize:14,fontWeight:500}},"Overall progress"),
+          e("div",{style:{fontFamily:"var(--font-mono)",fontSize:14}},`${Math.round(overallPct*100)}%`)),
+        e("div",{style:{background:"var(--color-background-secondary)",borderRadius:99,height:6,overflow:"hidden",marginBottom:16}},
+          e("div",{style:{background:"var(--color-text-info)",height:"100%",width:`${overallPct*100}%`,borderRadius:99,transition:"width .8s ease"}})),
+        e("div",{style:{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}},
+          [["Sets done",`${completedCount}/24`],["Days in",`${daysInTreatment}d`],["Total days",`${totalDays}d`],["Est. finish",estEnd?fmts(estEnd):"—"]].map(([label,val])=>
+            e("div",{key:label,style:sec},
+              e("div",{style:{fontSize:11,color:"var(--color-text-tertiary)",marginBottom:4}},label),
+              e("div",{style:{fontSize:15,fontWeight:500,fontFamily:"var(--font-mono)"}},val))))),
+
+      // Upcoming
+      upcoming.length>1&&e("div",{style:card},
+        e("h3",{style:{fontSize:16,fontWeight:500,margin:"0 0 12px"}},"Upcoming changes"),
+        e("div",{style:{display:"flex",flexDirection:"column",gap:6}},
+          upcoming.map(s=>{
+            const du=diff(NOW,s.end),isCur=cur?.id===s.id;
+            return e("div",{key:s.id,style:{display:"flex",alignItems:"center",gap:12,padding:"10px 12px",
+              borderRadius:"var(--border-radius-md)",
+              background:isCur?"var(--color-background-info)":"var(--color-background-secondary)"}},
+              e("div",{style:{fontFamily:"var(--font-mono)",fontSize:15,fontWeight:500,width:28,textAlign:"center",
+                color:isCur?"var(--color-text-info)":"var(--color-text-secondary)"}},s.id),
+              e("div",{style:{flex:1,fontSize:13}},
+                e("span",{style:{color:"var(--color-text-primary)"}},`Set ${s.id}`),
+                e("span",{style:{color:"var(--color-text-secondary)",marginLeft:8}},`→ change ${fmts(s.end)}`)),
+              e("div",{style:{fontFamily:"var(--font-mono)",fontSize:13,color:du<=2?"var(--color-text-warning)":"var(--color-text-secondary)"}},
+                isCur?`${daysLeft}d left`:`in ${du}d`));
+          })))),
+
+    // TIMELINE
+    tab==="timeline"&&e("div",{className:"inv-fade",style:{...card,padding:0,overflow:"hidden"}},
+      e("div",{style:{padding:"1rem 1.25rem",borderBottom:"0.5px solid var(--color-border-tertiary)"}},
+        e("h3",{style:{fontSize:16,fontWeight:500,margin:0}},"All 24 aligner sets")),
+      e("div",{style:{overflowX:"auto"}},
+        e("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:14}},
+          e("thead",null,
+            e("tr",{style:{borderBottom:"0.5px solid var(--color-border-tertiary)"}},
+              ["#","Days","Start","End / change","Status","Changed"].map(h=>
+                e("th",{key:h,style:{padding:"10px 12px",textAlign:"left",fontSize:11,color:"var(--color-text-tertiary)",textTransform:"uppercase",letterSpacing:1,fontWeight:500}},h)))),
+          e("tbody",null,
+            sets.map(s=>{
+              const st=getStatus(s),isCur=st==="current",isDone=st==="completed",ch=!!(cfg.changed?.[s.id]);
+              return e("tr",{key:s.id,className:"row-hover",style:{borderBottom:"0.5px solid var(--color-border-tertiary)",background:isCur?"var(--color-background-info)":"transparent",transition:"background .1s"}},
+                e("td",{style:{padding:"12px",fontFamily:"var(--font-mono)",fontWeight:500,fontSize:15,color:isCur?"var(--color-text-info)":isDone?"var(--color-text-tertiary)":"var(--color-text-primary)"}},s.id),
+                e("td",{style:{padding:"12px",fontFamily:"var(--font-mono)",color:s.days?"var(--color-text-primary)":"var(--color-text-tertiary)"}},s.days?`${s.days}d`:"—"),
+                e("td",{style:{padding:"12px",color:s.start?"var(--color-text-primary)":"var(--color-text-tertiary)"}},fmt(s.start)),
+                e("td",{style:{padding:"12px",color:s.end?isCur?"var(--color-text-info)":"var(--color-text-primary)":"var(--color-text-tertiary)",fontWeight:isCur?500:400}},fmt(s.end)),
+                e("td",{style:{padding:"12px"}},
+                  e("span",{style:{fontSize:12,padding:"3px 8px",borderRadius:99,
+                    background:st==="current"?"var(--color-background-info)":st==="completed"?"var(--color-background-success)":"var(--color-background-secondary)",
+                    color:st==="current"?"var(--color-text-info)":st==="completed"?"var(--color-text-success)":"var(--color-text-tertiary)"}},
+                    st==="current"?"● Active":st==="completed"?"✓ Done":st==="upcoming"?"Upcoming":"Not set")),
+                e("td",{style:{padding:"12px"}},
+                  isDone||isCur?e("button",{className:"inv-btn",onClick:()=>{
+                      const c2={...(cfg.changed||{})};
+                      if(c2[s.id])delete c2[s.id];else c2[s.id]=iso(NOW);
+                      save({...cfg,changed:c2});
+                    },style:{border:"0.5px solid",borderRadius:"var(--border-radius-md)",padding:"4px 10px",fontSize:12,
+                      background:ch?"var(--color-background-success)":"transparent",
+                      borderColor:ch?"var(--color-border-success)":"var(--color-border-tertiary)",
+                      color:ch?"var(--color-text-success)":"var(--color-text-secondary)"}},
+                    ch?"✓ Changed":"Mark")
+                  :e("span",{style:{color:"var(--color-text-tertiary)"}},"—")));
+            }))))),
+
+    // SETUP
+    tab==="setup"&&e("div",{className:"inv-fade",style:{display:"flex",flexDirection:"column",gap:"1rem"}},
+      // Start date
+      e("div",{style:card},
+        e("h3",{style:{fontSize:16,fontWeight:500,margin:"0 0 6px"}},"Treatment start date"),
+        e("p",{style:{fontSize:13,color:"var(--color-text-secondary)",margin:"0 0 14px"}},"The first day you put in Set 1."),
+        e("div",{style:{display:"flex",gap:10,alignItems:"center",maxWidth:280}},
+          e("input",{type:"date",value:cfg.startDate,onChange:ev=>save({...cfg,startDate:ev.target.value}),style:{flex:1}}),
+          cfg.startDate&&e("i",{className:"ti ti-circle-check",style:{color:"var(--color-text-success)",fontSize:20},"aria-hidden":"true"}))),
+
+      // Groups
+      e("div",{style:card},
+        e("h3",{style:{fontSize:16,fontWeight:500,margin:"0 0 6px"}},"Aligner groups"),
+        e("p",{style:{fontSize:13,color:"var(--color-text-secondary)",margin:"0 0 16px"}},"Group sets with the same wear duration. Dates chain automatically in sequence."),
+
+        // Form
+        e("div",{style:{...sec,marginBottom:16}},
+          e("div",{style:{fontSize:13,fontWeight:500,marginBottom:12}},editIdx!==null?"Edit group":"Add group"),
+          e("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr 1fr auto",gap:10,alignItems:"end"}},
+            [["from","From set","1",1,24],["to","To set","4",1,24],["days","Days each","14",1,90]].map(([key,label,ph,min,max])=>
+              e("div",{key},
+                e("label",{style:{display:"block",fontSize:11,color:"var(--color-text-tertiary)",marginBottom:6,textTransform:"uppercase",letterSpacing:1}},label),
+                e("input",{type:"number",min,max,placeholder:ph,value:gf[key],
+                  onChange:ev=>setGf({...gf,[key]:ev.target.value}),style:{width:"100%"}}))),
+            e("div",{style:{display:"flex",gap:6}},
+              e("button",{className:"inv-btn",onClick:addGroup,style:{padding:"0 18px",height:36,borderRadius:"var(--border-radius-md)",background:"var(--color-background-info)",color:"var(--color-text-info)",border:"0.5px solid var(--color-border-info)",fontWeight:500,fontSize:14,whiteSpace:"nowrap"}},
+                editIdx!==null?"Save":"Add"),
+              editIdx!==null&&e("button",{className:"inv-btn",onClick:()=>{setEditIdx(null);setGf({from:"",to:"",days:""})},style:{padding:"0 10px",height:36,borderRadius:"var(--border-radius-md)",border:"0.5px solid var(--color-border-tertiary)",background:"transparent",color:"var(--color-text-secondary)",fontSize:14}},"✕")))),
+
+        // Group list
+        cfg.groups.length===0
+          ?e("div",{style:{textAlign:"center",padding:"1.5rem",color:"var(--color-text-tertiary)",fontSize:14,border:"0.5px dashed var(--color-border-secondary)",borderRadius:"var(--border-radius-md)"}},"No groups yet. Add your first group above.")
+          :e("div",{style:{display:"flex",flexDirection:"column",gap:6}},
+            cfg.groups.map((g,i)=>
+              e("div",{key:i,style:{display:"flex",alignItems:"center",gap:12,...sec}},
+                e("span",{style:{fontFamily:"var(--font-mono)",fontSize:12,color:"var(--color-text-info)",background:"var(--color-background-info)",padding:"3px 10px",borderRadius:99,whiteSpace:"nowrap"}},`Sets ${g.from}–${g.to}`),
+                e("span",{style:{flex:1,fontSize:13}},e("strong",null,g.days)," days each ",e("span",{style:{color:"var(--color-text-tertiary)"}},`· ${(g.to-g.from+1)*g.days} days total`)),
+                e("button",{className:"inv-btn",onClick:()=>editGroup(i),style:{background:"transparent",border:"0.5px solid var(--color-border-tertiary)",borderRadius:"var(--border-radius-md)",padding:"4px 10px",fontSize:12,color:"var(--color-text-secondary)"}},"Edit"),
+                e("button",{className:"inv-btn",onClick:()=>deleteGroup(i),style:{background:"var(--color-background-danger)",border:"0.5px solid var(--color-border-danger)",borderRadius:"var(--border-radius-md)",padding:"4px 10px",fontSize:12,color:"var(--color-text-danger)"}},"Delete")))),
+
+        // Coverage map
+        cfg.groups.length>0&&e("div",{style:{marginTop:16}},
+          e("div",{style:{fontSize:11,color:"var(--color-text-tertiary)",textTransform:"uppercase",letterSpacing:1,marginBottom:8}},"Coverage map"),
+          e("div",{style:{display:"flex",gap:4,flexWrap:"wrap"}},
+            sets.map(s=>{
+              const st2=s.days?(s.start?(NOW>s.end?"done":cur?.id===s.id?"cur":"cfg"):"cfg"):"empty";
+              return e("div",{key:s.id,title:`Set ${s.id}: ${s.days?`${s.days}d`:"not configured"}`,
+                style:{width:28,height:28,borderRadius:6,display:"flex",alignItems:"center",justifyContent:"center",
+                  fontSize:10,fontFamily:"var(--font-mono)",fontWeight:500,cursor:"default",
+                  background:st2==="empty"?"var(--color-background-secondary)":st2==="done"?"var(--color-background-success)":st2==="cur"?"var(--color-background-info)":"var(--color-background-info)",
+                  color:st2==="empty"?"var(--color-text-tertiary)":st2==="done"?"var(--color-text-success)":"var(--color-text-info)",
+                  border:`0.5px solid ${st2==="cur"?"var(--color-border-info)":"transparent"}`}},
+                s.id);
+            })),
+          e("div",{style:{display:"flex",gap:16,marginTop:10,flexWrap:"wrap"}},
+            [["var(--color-background-success)","var(--color-text-success)","Completed"],
+             ["var(--color-background-info)","var(--color-text-info)","Current / configured"],
+             ["var(--color-background-secondary)","var(--color-text-tertiary)","Not set"]].map(([bg2,col,label])=>
+              e("div",{key:label,style:{display:"flex",alignItems:"center",gap:6,fontSize:11,color:"var(--color-text-tertiary)"}},
+                e("div",{style:{width:10,height:10,borderRadius:2,background:bg2,border:`0.5px solid ${col}`}}),
+                label))))),
+
+      // Reset
+      e("div",{style:{...card,border:"0.5px solid var(--color-border-danger)",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}},
+        e("div",null,
+          e("div",{style:{fontWeight:500,marginBottom:4}},"Reset all data"),
+          e("div",{style:{fontSize:13,color:"var(--color-text-secondary)"}},"Clear all configuration and start fresh.")),
+        e("button",{className:"inv-btn",onClick:()=>{if(confirm("Reset all data? This cannot be undone."))save(INIT)},
+          style:{background:"var(--color-background-danger)",border:"0.5px solid var(--color-border-danger)",borderRadius:"var(--border-radius-md)",padding:"8px 18px",color:"var(--color-text-danger)",fontWeight:500,fontSize:14}},
+          "Reset data"))
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("app")).render(React.createElement(App));
+</script>
